@@ -1,113 +1,138 @@
-import React, { useEffect, useState } from "react";
-import { Container, Form, Button, Card, Alert } from "react-bootstrap";
+import React, { useState, useEffect } from "react";
+import { collection, getDocs, doc, getDoc, updateDoc, increment, onSnapshot } from "firebase/firestore";
+import { auth, db } from "../firebase"; 
 import { useParams, useNavigate } from "react-router-dom";
-import { collection, getDocs, query, where, limit, doc, getDoc } from "firebase/firestore";
-import { db } from "../firebase";
+import { Button, Alert, Container, Form, Nav, Navbar, NavbarText } from "react-bootstrap";
+import '../App';
+import { signOut } from "firebase/auth";
+import { useAuthState } from "react-firebase-hooks/auth";
 
 export default function Question() {
-  const { subjectId } = useParams(); 
-  const [question, setQuestion] = useState(null);
-  const [selectedOption, setSelectedOption] = useState("");
-  const [error, setError] = useState("");
-  const [questionId, setQuestionId] = useState(null);
-  const [score, setScore] = useState(0); // Track the score
-  const navigate = useNavigate();
+    const [user, loading] = useAuthState(auth);
+    const { subjectId, questionId } = useParams();
+    const navigate = useNavigate();
+    const [questionData, setQuestionData] = useState(null);
+    const [selectedOption, setSelectedOption] = useState("");
+    const [feedback, setFeedback] = useState("");
+    const [userEmail, setUserEmail] = useState("")
+    const [userScore, setUserScore] = useState(null)
 
-  useEffect(() => {
-    const fetchQuestion = async () => {
-      try {
-        const questionQuery = query(
-          collection(db, "Subjects", subjectId, "Questions"),
-          limit(1)
-        );
-        const querySnapshot = await getDocs(questionQuery);
-        
-        if (!querySnapshot.empty) {
-          const doc = querySnapshot.docs[0];
-          setQuestion({ id: doc.id, ...doc.data() });
-          setQuestionId(doc.id); // Store the question ID
-        } else {
-          setError("No questions found for this subject.");
+    useEffect(() => {
+        if (user && user.email) {
+                setUserEmail(user.email);
+            } else {
+                setUserEmail(`Not logged in`);
+            }
+        }, [user])
+
+        useEffect(() => {
+            if (userEmail) {
+                const scoreDocRef = doc(db, "score", userEmail);
+                const unsubscribe = onSnapshot(scoreDocRef, (doc) => {
+                    if (doc.exists()) {
+                        setUserScore(doc.data().score);
+                    } else {
+                        console.log("No such document!");
+                    }
+                });
+            return () => unsubscribe();
+            }
+        }, [userEmail]);
+
+    useEffect(() => {
+        if (loading) return;
+        if (!user) return navigate("/login");
+      }, [navigate, user, loading])
+
+    useEffect(() => {
+        const fetchQuestion = async () => {
+        try {
+            const questionDocRef = doc(db, `Subjects/${subjectId}/questions`, questionId);
+            const questionDoc = await getDoc(questionDocRef);
+            if (questionDoc.exists()) {
+            setQuestionData(questionDoc.data());
+            } else {
+            setFeedback("Question not found.");
+            }
+        } catch (error) {
+            console.error("Error fetching question: ", error);
+            setFeedback("Error fetching question.");
         }
-      } catch (error) {
-        setError("Error fetching question.");
-        console.error("Error fetching question: ", error);
-      }
+        };
+        fetchQuestion();
+    }, [subjectId, questionId]);
+
+    const handleOptionChange = (event) => {
+        setSelectedOption(event.target.value);
     };
 
-    fetchQuestion();
-  }, [subjectId]);
-
-  const handleNext = async () => {
-    if (!selectedOption) {
-      setError("Please select an option.");
-      return;
-    }
-
-    if (question) {
-      // Check if the selected option is correct
-      const correctOption = question.correctOption;
-      if (selectedOption === correctOption) {
-        setScore(score + 1);
-      }
-
-      // Fetch the next question
-      try {
-        const nextQuestionQuery = query(
-          collection(db, "Subjects", subjectId, "Questions"),
-          where("__name__", ">", questionId),
-          limit(1)
-        );
-        const querySnapshot = await getDocs(nextQuestionQuery);
-
-        if (!querySnapshot.empty) {
-          const doc = querySnapshot.docs[0];
-          setQuestion({ id: doc.id, ...doc.data() });
-          setQuestionId(doc.id); // Update the question ID
-          setSelectedOption(""); // Clear selected option
-          setError("");
+    const handleSubmit = async () => {
+        console.log("Selected Option:", selectedOption);
+        console.log("Correct Answer:", questionData.correct);
+        if (selectedOption === questionData.correct) {
+        setFeedback("Correct! +1 Point!");
+        await updateDoc(doc(db, `score/${userEmail}`), { score: increment(1) });
         } else {
-          // If no more questions are available, end the quiz
-          alert(`Quiz finished! Your score: ${score + 1}`);
-          navigate("/");
+        setFeedback("Incorrect!");
         }
-      } catch (error) {
-        setError("Error fetching the next question.");
-        console.error("Error fetching next question: ", error);
-      }
-    }
-  };
 
-  return (
-    <Container>
-      <h1 className="my-3">Quiz for {subjectId}</h1>
-      {error && <Alert variant="danger">{error}</Alert>}
-      {question ? (
-        <Card>
-          <Card.Body>
-            <Card.Title>{question.questionText}</Card.Title>
-            <Form>
-              {["A", "B", "C", "D"].map((option) => (
-                <Form.Check
-                  key={option}
-                  type="radio"
-                  id={`option${option}`}
-                  label={question[`option${option}`]}
-                  name="quizOptions"
-                  value={option}
-                  checked={selectedOption === option}
-                  onChange={(e) => setSelectedOption(e.target.value)}
-                />
-              ))}
-              <Button variant="primary" onClick={handleNext}>
-                {questionId ? "Next" : "Start Quiz"}
-              </Button>
-            </Form>
-          </Card.Body>
-        </Card>
-      ) : (
-        <p>Loading question...</p>
-      )}
-    </Container>
-  );
-}
+        const fetchAllQuestionIds = async () => {
+        const questionsCollectionRef = collection(db, `Subjects/${subjectId}/questions`);
+        const questionsSnapshot = await getDocs(questionsCollectionRef);
+        return questionsSnapshot.docs.map(doc => doc.id);
+        };
+
+        const allQuestionIds = await fetchAllQuestionIds();
+        const randomQuestionId = allQuestionIds[Math.floor(Math.random() * allQuestionIds.length)];
+
+        setTimeout(() => {
+        navigate(`/question/${subjectId}/${randomQuestionId}`);
+        }, 1000);
+    };
+
+    if (!questionData) {
+        return <div>Loading...</div>;
+    }
+    
+
+    return (
+        <>
+        <Navbar bg="dark" variant="dark" expand="lg">
+            <Container>
+                <Navbar.Brand href="/">Community of Education</Navbar.Brand>
+                <Navbar.Toggle aria-controls="basic-navbar-nav" />
+                <Navbar.Collapse id="basic-navbar-nav">
+                <Nav className="ms-auto">
+                    <Nav.Link href="/add">Add Questions</Nav.Link>
+                    <Nav.Link onClick={(e) => signOut(auth)}>Logout</Nav.Link>
+                    <NavbarText style={{color:"white"}} className="ms-3">{userEmail}</NavbarText>
+                    <Nav className="ms-auto">
+                </Nav>
+                    <NavbarText style={{color:"grey"}} className="ms-3">{userScore} points</NavbarText>
+                </Nav>
+                </Navbar.Collapse>
+            </Container>
+        </Navbar>
+
+        <Container className="question-container">
+        <h2 className="question-title">{questionData.question}</h2>
+        <Form>
+            {["option1", "option2", "option3", "option4"].map((option, index) => (
+            <Form.Check 
+                key={index}
+                type="radio"
+                id={option}
+                name="mcq"
+                value={questionData[option]}
+                label={questionData[option]}
+                onChange={handleOptionChange}
+                className="mb-3"
+            />
+            ))}
+        </Form>
+        <Button onClick={handleSubmit} className="mt-3" >Submit</Button>
+        {feedback && <Alert variant={feedback === "Correct!" ? "success" : "danger"} className="mt-3">{feedback}</Alert>}
+        </Container>
+        </>
+    );
+    }

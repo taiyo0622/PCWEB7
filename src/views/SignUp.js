@@ -3,7 +3,7 @@ import { Button, Container, Form, Alert } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth, db } from "../firebase";
-import { addDoc, collection } from "firebase/firestore";
+import { setDoc, doc } from "firebase/firestore";
 
 export default function SignUpPage() {
   const [username, setUsername] = useState("");
@@ -13,7 +13,7 @@ export default function SignUpPage() {
 
   async function addUser(uid) {
     try {
-      await addDoc(collection(db, "score"), { score: 0 });
+      await setDoc(doc(db, "score", `${username}`), { score: 0 });
       navigate("/");
     } catch (error) {
       console.error("Error adding user to Firestore: ", error);

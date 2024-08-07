@@ -1,29 +1,40 @@
-import React, { useState } from "react";
-import { Container, Dropdown, Button, Alert, Navbar, Nav } from "react-bootstrap";
+import React, { useEffect, useState } from "react";
+import { Container, Dropdown, Button, Alert, Navbar, Nav, NavbarText } from "react-bootstrap";
 import { collection, getDocs, query, where, doc } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 import { auth, db } from "../firebase";
 import { signOut } from "firebase/auth";
+import { useAuthState } from "react-firebase-hooks/auth";
+
 
 export default function HomePage() {
-  const [selectedLevel, setSelectedLevel] = useState("");
-  const [selectedSubject, setSelectedSubject] = useState("");
-  const [error, setError] = useState("");
-  const navigate = useNavigate();
+    const [user, loading] = useAuthState(auth);
+    const [selectedLevel, setSelectedLevel] = useState("");
+    const [selectedSubject, setSelectedSubject] = useState("");
+    const [error, setError] = useState("");
+    const navigate = useNavigate();
+    const [userEmail, setUserEmail] = useState("");
 
-  const levels = ["PSLE", "O-Level", "A-Level"];
-  const subjects = ["Math", "English", "Science"];
+    useEffect(() => {
+    if (user && user.email) {
+            setUserEmail(user.email);
+        } else {
+            setUserEmail(`Not logged in`);
+        }
+    }, [user])
 
-  const handleSearch = async () => {
+    const levels = ["PSLE", "O-Level"];
+    const subjects = ["Math", "English", "Science"];
+
+    const handleSearch = async () => {
     setError("");
     if (!selectedLevel || !selectedSubject) {
-      setError("Please select both dropdown options.");
-      return;
+        setError("Please select both dropdown options.");
+        return;
     }
 
     const combinedSubject = `${selectedLevel.toLowerCase()}${selectedSubject.toLowerCase()}`;
-    console.log(`${combinedSubject}`)
-    
+
     try {
         const subjectCollectionRef = collection(db, "Subjects");
         const q = query(subjectCollectionRef, where("__name__", "==", combinedSubject));
@@ -38,79 +49,84 @@ export default function HomePage() {
                 const randomIndex = Math.floor(Math.random() * questionIDs.length);
                 const questionId = questionIDs[randomIndex];
                 navigate(`/question/${combinedSubject}/${questionId}`);
-              } else {
+                } else {
                 console.log("No documents found in the collection.");
-              }
-              
+                }
+                
         } else {
             setError("Subject not found.");
-      }
+        }
     } catch (error) {
-      setError("Error fetching documents.");
-      console.error("Error fetching documents: ", error);
+        setError("Error fetching documents.");
+        console.error("Error fetching documents: ", error);
     }
-  };
+    };
 
+    useEffect(() => {
+        if (loading) return;
+        if (!user) return navigate("/login");
+      }, [navigate, user, loading]);
+    
 
-
-  return (
+    return (
     <>
-      <Navbar bg="dark" variant="dark" expand="lg">
-        <Container>
-          <Navbar.Brand href="/">Community of Education</Navbar.Brand>
-          <Navbar.Toggle aria-controls="basic-navbar-nav" />
-          <Navbar.Collapse id="basic-navbar-nav">
-            <Nav className="mr-auto">
-              <Nav.Link href="/add">Add Questions</Nav.Link>
-              <Nav.Link onClick={() => signOut(auth)}>Logout</Nav.Link>
-            </Nav>
-          </Navbar.Collapse>
-        </Container>
-      </Navbar>
+        <Navbar bg="dark" variant="dark" expand="lg">
+            <Container>
+                <Navbar.Brand href="/">Community of Education</Navbar.Brand>
+                <Navbar.Toggle aria-controls="basic-navbar-nav" />
+                <Navbar.Collapse id="basic-navbar-nav">
+                <Nav className="ms-auto">
+                    <Nav.Link href="/add">Add Questions</Nav.Link>
+                    <Nav.Link onClick={(e) => signOut(auth)}>Logout</Nav.Link>
+                    <NavbarText style={{color:"white"}}>{userEmail}</NavbarText>
+                </Nav>
+                </Navbar.Collapse>
+            </Container>
+        </Navbar>
 
-      <Container className="my-3">
-        <h1>Search for Subjects</h1>
+        <Container className="my-3">
+        <h1>What MCQ questions would you like to do?</h1>
 
         <Dropdown className="mb-3">
-          <Dropdown.Toggle variant="success" id="dropdown-level">
+            <Dropdown.Toggle variant="success" id="dropdown-level">
             {selectedLevel || "Select Level"}
-          </Dropdown.Toggle>
+            </Dropdown.Toggle>
 
-          <Dropdown.Menu>
+            <Dropdown.Menu>
             {levels.map(level => (
-              <Dropdown.Item
+                <Dropdown.Item
                 key={level}
                 onClick={() => setSelectedLevel(level)}
-              >
+                >
                 {level}
-              </Dropdown.Item>
+                </Dropdown.Item>
             ))}
-          </Dropdown.Menu>
+            </Dropdown.Menu>
         </Dropdown>
 
         <Dropdown className="mb-3">
-          <Dropdown.Toggle variant="success" id="dropdown-subject">
+            <Dropdown.Toggle variant="success" id="dropdown-subject">
             {selectedSubject || "Select Subject"}
-          </Dropdown.Toggle>
+            </Dropdown.Toggle>
 
-          <Dropdown.Menu>
+            <Dropdown.Menu>
             {subjects.map(subject => (
-              <Dropdown.Item
+                <Dropdown.Item
                 key={subject}
                 onClick={() => setSelectedSubject(subject)}
-              >
+                >
                 {subject}
-              </Dropdown.Item>
+                </Dropdown.Item>
             ))}
-          </Dropdown.Menu>
+            </Dropdown.Menu>
         </Dropdown>
 
         <Button variant="primary" onClick={handleSearch}>
-          Search
+            Search
         </Button>
 
         {error && <Alert variant="danger" className="mt-3">{error}</Alert>}
-      </Container>
+        </Container>
     </>
-  );
-}
+    );
+    }
