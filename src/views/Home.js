@@ -16,6 +16,9 @@ export default function HomePage() {
     const navigate = useNavigate();
     const [userEmail, setUserEmail] = useState("");
     const [userScore, setUserScore] = useState(null);
+    const levels = ["PSLE", "O-Level", "A-Level"];
+    const highers = ["H1", "H2", "H3"];
+    const subjects = ["Math", "English", "Science","Chemistry"];
 
     useEffect(() => {
     if (user && user.email) {
@@ -39,13 +42,9 @@ export default function HomePage() {
         }
     }, [userEmail]);
 
-    const levels = ["PSLE", "O-Level", "A-Level"];
-    const highers = ["H1", "H2", "H3"];
-    const subjects = ["Math", "English", "Science","Chemistry"];
-
     const handleSearch = async () => {
     setError("");
-    if ((!selectedLevel || !selectedSubject) || (selectedLevel === "A-level" ? !selectedHigher : selectedHigher)) {
+    if ((!selectedLevel || !selectedSubject) || (selectedLevel === "A-Level" ? !selectedHigher : selectedHigher)) {
         setError("Please select all dropdown options.");
         return;
     }
@@ -108,7 +107,7 @@ export default function HomePage() {
         <h1>What MCQ questions would you like to do?</h1>
 
         <Dropdown className="mb-3">
-                <Dropdown.Toggle variant="success" id="dropdown-level">
+                <Dropdown.Toggle variant="info" id="dropdown-level">
                     {selectedLevel || "Select Level"}
                 </Dropdown.Toggle>
                 <Dropdown.Menu>
@@ -121,29 +120,29 @@ export default function HomePage() {
                         </Dropdown.Item>
                     ))}
                 </Dropdown.Menu>
+        </Dropdown>
+
+        {selectedLevel === "A-Level" && (
+            <Dropdown className="mb-3">
+                <Dropdown.Toggle variant="info" id="dropdown-higher">
+                    {selectedHigher || "Select Higher"}
+                </Dropdown.Toggle>
+                <Dropdown.Menu>
+                    {highers.map(higher => (
+                        <Dropdown.Item
+                            key={higher}
+                            onClick={() => setSelectedHigher(higher)}
+                        >
+                            {higher}
+                        </Dropdown.Item>
+                    ))}
+                </Dropdown.Menu>
             </Dropdown>
+        )}
 
-            {selectedLevel === "A-level" && (
+            {selectedLevel && (selectedLevel !== "A-Level" || selectedHigher) && (
                 <Dropdown className="mb-3">
-                    <Dropdown.Toggle variant="success" id="dropdown-higher">
-                        {selectedHigher || "Select Higher"}
-                    </Dropdown.Toggle>
-                    <Dropdown.Menu>
-                        {highers.map(higher => (
-                            <Dropdown.Item
-                                key={higher}
-                                onClick={() => setSelectedHigher(higher)}
-                            >
-                                {higher}
-                            </Dropdown.Item>
-                        ))}
-                    </Dropdown.Menu>
-                </Dropdown>
-            )}
-
-            {selectedLevel && (selectedLevel !== "A-level" || selectedHigher) && (
-                <Dropdown className="mb-3">
-                    <Dropdown.Toggle variant="success" id="dropdown-subject">
+                    <Dropdown.Toggle variant="info" id="dropdown-subject">
                         {selectedSubject || "Select Subject"}
                     </Dropdown.Toggle>
                     <Dropdown.Menu>

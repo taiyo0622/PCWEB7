@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { collection, getDocs, doc, getDoc, updateDoc, increment, onSnapshot } from "firebase/firestore";
 import { auth, db } from "../firebase"; 
 import { useParams, useNavigate } from "react-router-dom";
-import { Button, Alert, Container, Form, Nav, Navbar, NavbarText } from "react-bootstrap";
+import { Button, Alert, Container, Form, Nav, Navbar, NavbarText, Image } from "react-bootstrap";
 import '../App';
 import { signOut } from "firebase/auth";
 import { useAuthState } from "react-firebase-hooks/auth";
@@ -130,9 +130,26 @@ export default function Question() {
             />
             ))}
         </Form>
-        <Button onClick={handleSubmit} className="mt-3" >Submit</Button>
-        {feedback && <Alert variant={feedback === "Correct!" ? "success" : "danger"} className="mt-3">{feedback}</Alert>}
+        <Button onClick={handleSubmit} variant="info" className="mt-3" >Submit</Button>
         </Container>
+        {questionData.image !== "" && (
+            <Container>
+                <div class="centered">
+                    
+                        <Image
+                            src={questionData.image}
+                            style={{
+                                objectFit: "cover",
+                                width: "30rem",
+                                height: "30rem",
+                                textAlign: "center"
+                        }}
+                        />
+                
+                </div>
+            </Container>
+         )}
+        {feedback && <Alert variant={feedback === "Correct!" ? "success" : "danger"} className="mt-3">{feedback}</Alert>}
         </>
     );
     }
