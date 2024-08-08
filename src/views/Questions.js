@@ -25,19 +25,19 @@ export default function Question() {
             }
         }, [user])
 
-        useEffect(() => {
-            if (userEmail) {
-                const scoreDocRef = doc(db, "score", userEmail);
-                const unsubscribe = onSnapshot(scoreDocRef, (doc) => {
-                    if (doc.exists()) {
-                        setUserScore(doc.data().score);
-                    } else {
-                        console.log("No such document!");
-                    }
-                });
-            return () => unsubscribe();
-            }
-        }, [userEmail]);
+    useEffect(() => {
+        if (userEmail) {
+            const scoreDocRef = doc(db, "score", userEmail);
+            const unsubscribe = onSnapshot(scoreDocRef, (doc) => {
+                if (doc.exists()) {
+                    setUserScore(doc.data().score);
+                } else {
+                    console.log("No such document!");
+                }
+            });
+        return () => unsubscribe();
+        }
+    }, [userEmail]);
 
     useEffect(() => {
         if (loading) return;
@@ -99,7 +99,7 @@ export default function Question() {
         <>
         <Navbar bg="dark" variant="dark" expand="lg">
             <Container>
-                <Navbar.Brand href="/">Community of Education</Navbar.Brand>
+                <Navbar.Brand href="/">🤓 Community of Education</Navbar.Brand>
                 <Navbar.Toggle aria-controls="basic-navbar-nav" />
                 <Navbar.Collapse id="basic-navbar-nav">
                 <Nav className="ms-auto">

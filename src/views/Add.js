@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Button, Dropdown, Container, Form, Nav, Navbar, Alert, NavbarText } from "react-bootstrap";
-import { addDoc, collection } from "firebase/firestore";
+import { addDoc, collection, doc, onSnapshot, updateDoc, increment } from "firebase/firestore";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { useNavigate } from "react-router-dom";
 import { auth, db } from "../firebase";
@@ -9,9 +9,11 @@ import '../App';
 
 export default function Add() {
     const [user, loading] = useAuthState(auth);
+    const [userScore, setUserScore] = useState(null)
     const [userEmail, setUserEmail] = useState("")
     const [error,setError] = useState("")
     const [selectedLevel, setSelectedLevel] = useState("");
+    const [selectedHigher, setSelectedHigher] = useState("")
     const [selectedSubject, setSelectedSubject] = useState("");
     const [question, setQuestion] = useState("");
     const [option1, setOption1] = useState("");
@@ -20,8 +22,9 @@ export default function Add() {
     const [option4, setOption4] = useState("");
     const [correct, setCorrect] = useState("");
     const navigate = useNavigate();
-    const levels = ["PSLE", "O-Level"];
-    const subjects = ["Math", "English", "Science"];
+    const levels = ["PSLE", "O-Level","A-level"];
+    const highers = ["H1", "H2", "H3"];
+    const subjects = ["Math", "English", "Science", "Chemistry"];
 
     useEffect(() => {
         if (user && user.email) {
@@ -30,16 +33,31 @@ export default function Add() {
                 setUserEmail(`Not logged in`);
             }
         }, [user])
-        
+
+    useEffect(() => {
+        if (userEmail) {
+            const scoreDocRef = doc(db, "score", userEmail);
+            const unsubscribe = onSnapshot(scoreDocRef, (doc) => {
+                if (doc.exists()) {
+                    setUserScore(doc.data().score);
+                } else {
+                    console.log("No such document!");
+                }
+            });
+        return () => unsubscribe();
+        }
+    }, [userEmail]);
+    
     const addQuestion = async () => {
         setError("");
-        if (!selectedLevel || !selectedSubject) {
-            setError("Please select both dropdown options.");
+        if ((!selectedLevel || !selectedSubject) || (selectedLevel === "A-level" ? !selectedHigher : selectedHigher)) {
+            setError("Please select all dropdown options.");
             return;
         }
 
-        const combinedSubject = `${selectedLevel.toLowerCase()}${selectedSubject.toLowerCase()}`;
+        const combinedSubject = `${selectedLevel.toLowerCase()}${selectedHigher.toLowerCase()}${selectedSubject.toLowerCase()}`;
         await addDoc(collection(db, `Subjects/${combinedSubject}/questions`), { question, option1, option2, option3, option4, correct });
+        await updateDoc(doc(db, `score/${userEmail}`), { score: increment(10) });
         navigate("/");
     };
 
@@ -52,55 +70,76 @@ export default function Add() {
         <>
             <Navbar bg="dark" variant="dark" expand="lg">
             <Container>
-                <Navbar.Brand href="/">Community of Education</Navbar.Brand>
+                <Navbar.Brand href="/">🤓 Community of Education</Navbar.Brand>
                 <Navbar.Toggle aria-controls="basic-navbar-nav" />
                 <Navbar.Collapse id="basic-navbar-nav">
                 <Nav className="ms-auto">
                     <Nav.Link href="/add">Add Questions</Nav.Link>
                     <Nav.Link onClick={(e) => signOut(auth)}>Logout</Nav.Link>
-                    <NavbarText style={{color:"white"}}>{userEmail}</NavbarText>
+                    <NavbarText style={{color:"white"}} className="ms-3">{userEmail}</NavbarText>
+                    <Nav className="ms-auto">
+                </Nav>
+                    <NavbarText style={{color:"grey"}} className="ms-3">{userScore} points</NavbarText>
                 </Nav>
                 </Navbar.Collapse>
             </Container>
         </Navbar>
-    
+
             <Container className="my-3">
-            <h1 style={{ marginBlock: "1rem" }}>Add a question to the Community!</h1>
+                <h1 style={{ marginBlock: "1rem" }}>Add a question to the Community!</h1>
     
-            <Dropdown className="mb-3">
+                <Dropdown className="mb-3">
                 <Dropdown.Toggle variant="success" id="dropdown-level">
-                {selectedLevel || "Select Level"}
+                    {selectedLevel || "Select Level"}
                 </Dropdown.Toggle>
-    
                 <Dropdown.Menu>
-                {levels.map(level => (
-                    <Dropdown.Item
-                    key={level}
-                    onClick={() => setSelectedLevel(level)}
-                    >
-                    {level}
-                    </Dropdown.Item>
-                ))}
+                    {levels.map(level => (
+                        <Dropdown.Item
+                            key={level}
+                            onClick={() => setSelectedLevel(level)}
+                        >
+                            {level}
+                        </Dropdown.Item>
+                    ))}
                 </Dropdown.Menu>
             </Dropdown>
-    
-            <Dropdown className="mb-3">
-                <Dropdown.Toggle variant="success" id="dropdown-subject">
-                {selectedSubject || "Select Subject"}
-                </Dropdown.Toggle>
-    
-                <Dropdown.Menu>
-                {subjects.map(subject => (
-                    <Dropdown.Item
-                    key={subject}
-                    onClick={() => setSelectedSubject(subject)}
-                    >
-                    {subject}
-                    </Dropdown.Item>
-                ))}
-                </Dropdown.Menu>
-            </Dropdown>
-    
+
+            {selectedLevel === "A-level" && (
+                <Dropdown className="mb-3">
+                    <Dropdown.Toggle variant="success" id="dropdown-higher">
+                        {selectedHigher || "Select Higher"}
+                    </Dropdown.Toggle>
+                    <Dropdown.Menu>
+                        {highers.map(higher => (
+                            <Dropdown.Item
+                                key={higher}
+                                onClick={() => setSelectedHigher(higher)}
+                            >
+                                {higher}
+                            </Dropdown.Item>
+                        ))}
+                    </Dropdown.Menu>
+                </Dropdown>
+            )}
+
+            {selectedLevel && (selectedLevel !== "A-level" || selectedHigher) && (
+                <Dropdown className="mb-3">
+                    <Dropdown.Toggle variant="success" id="dropdown-subject">
+                        {selectedSubject || "Select Subject"}
+                    </Dropdown.Toggle>
+                    <Dropdown.Menu>
+                        {subjects.map(subject => (
+                            <Dropdown.Item
+                                key={subject}
+                                onClick={() => setSelectedSubject(subject)}
+                            >
+                                {subject}
+                            </Dropdown.Item>
+                        ))}
+                    </Dropdown.Menu>
+                </Dropdown>
+            )}
+
             <Container>
                     <Form>
                         <Form.Group className="mb-3" controlId="question">
