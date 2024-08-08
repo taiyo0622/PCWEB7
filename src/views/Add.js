@@ -54,8 +54,8 @@ export default function Add() {
     
     const addQuestion = async () => {
         setError("");
-        if ((!selectedLevel || !selectedSubject) || (selectedLevel === "A-Level" ? !selectedHigher : selectedHigher)) {
-            setError("Please select all dropdown options.");
+        if ((!selectedLevel || !selectedSubject) || (selectedLevel === "A-Level" ? !selectedHigher : selectedHigher) || (!setCorrect) || (!setError) || (!setOption1) || (!setOption2) || (!setOption3) || (!setOption4)) {
+            setError("All inputs other than the image is necessary. Please fill them up.");
             return;
         }
 
@@ -72,7 +72,10 @@ export default function Add() {
         
         await addDoc(collection(db, `Subjects/${combinedSubject}/questions`), { question, option1, option2, option3, option4, correct, image: imageUrl });
         await updateDoc(doc(db, `score/${userEmail}`), { score: increment(10) });
-        navigate("/");
+        setError("Thanks for your contribution! +10 points");
+        setTimeout(() => {
+            navigate("/");
+            }, 1000);
     };
 
     useEffect(() => {
@@ -237,7 +240,7 @@ export default function Add() {
                 submit
             </Button>
 
-            {error && <Alert variant="danger" className="mt-3">{error}</Alert>}
+            {error && <Alert variant={error === "Thanks for your contribution! +10 points" ? "success" : "danger"} className="mt-3">{error}</Alert>}
         </Container>
         </>
         );

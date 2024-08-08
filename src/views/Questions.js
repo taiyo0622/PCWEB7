@@ -87,7 +87,7 @@ export default function Question() {
 
         setTimeout(() => {
         navigate(`/question/${subjectId}/${randomQuestionId}`);
-        }, 1000);
+        }, 2000);
     };
 
     if (!questionData) {
@@ -149,7 +149,7 @@ export default function Question() {
                 </div>
             </Container>
          )}
-        {feedback && <Alert variant={feedback === "Correct!" ? "success" : "danger"} className="mt-3">{feedback}</Alert>}
+        {feedback && <Alert variant={feedback === "Correct! +1 Point!" ? "success" : "danger"} className="mt-3">{feedback}</Alert>}
         </>
     );
     }
