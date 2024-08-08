@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { collection, getDocs, doc, getDoc, updateDoc, increment, onSnapshot } from "firebase/firestore";
 import { auth, db } from "../firebase"; 
 import { useParams, useNavigate } from "react-router-dom";
-import { Button, Alert, Container, Form, Nav, Navbar, NavbarText, Image } from "react-bootstrap";
+import { Button, Alert, Container, Form, Nav, Navbar, NavbarText, Image, Dropdown } from "react-bootstrap";
 import '../App';
 import { signOut } from "firebase/auth";
 import { useAuthState } from "react-firebase-hooks/auth";
@@ -98,21 +98,26 @@ export default function Question() {
     return (
         <>
         <Navbar bg="dark" variant="dark" expand="lg">
-            <Container>
-                <Navbar.Brand href="/">🤓 Community of Education</Navbar.Brand>
-                <Navbar.Toggle aria-controls="basic-navbar-nav" />
-                <Navbar.Collapse id="basic-navbar-nav">
-                <Nav className="ms-auto">
-                    <Nav.Link href="/add">Add Questions</Nav.Link>
-                    <Nav.Link onClick={(e) => signOut(auth)}>Logout</Nav.Link>
-                    <NavbarText style={{color:"white"}} className="ms-3">{userEmail}</NavbarText>
-                    <Nav className="ms-auto">
-                </Nav>
-                    <NavbarText style={{color:"grey"}} className="ms-3">{userScore} points</NavbarText>
-                </Nav>
-                </Navbar.Collapse>
-            </Container>
-        </Navbar>
+                <Container>
+                    <Navbar.Brand href="/">🤓 Community of Education</Navbar.Brand>
+                    <Navbar.Toggle aria-controls="basic-navbar-nav" />
+                    <Navbar.Collapse id="basic-navbar-nav">
+                        <Nav className="ms-auto">
+                            <NavbarText style={{color:"white"}} className="ms-3">{userEmail}</NavbarText>
+                            <NavbarText style={{color:"grey"}} className="ms-3">{userScore} points</NavbarText>
+                            <Dropdown>
+                                <Dropdown.Toggle className="ms-3" variant="secondary" id="dropdown-basic">
+                                    Menu
+                                </Dropdown.Toggle>
+                                <Dropdown.Menu>
+                                    <Dropdown.Item href="/add">Add Questions</Dropdown.Item>
+                                    <Dropdown.Item onClick={(e) => signOut(auth)}>Logout</Dropdown.Item>
+                                </Dropdown.Menu>
+                            </Dropdown>
+                        </Nav>
+                    </Navbar.Collapse>
+                </Container>
+            </Navbar>
 
         <Container className="question-container">
         <h2 className="question-title">{questionData.question}</h2>

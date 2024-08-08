@@ -18,7 +18,9 @@ export default function HomePage() {
     const [userScore, setUserScore] = useState(null);
     const levels = ["PSLE", "O-Level", "A-Level"];
     const highers = ["H1", "H2", "H3"];
-    const subjects = ["Math", "English", "Science","Chemistry"];
+    const psleSubjects = ["Math", "English", "Science"];
+    const oLevelSubjects = ["Chemistry", "Physics", "Biology"];
+    const aLevelSubjects = ["Chemisty", "Physics", "Biology"];
 
     useEffect(() => {
     if (user && user.email) {
@@ -87,21 +89,26 @@ export default function HomePage() {
     return (
     <>
         <Navbar bg="dark" variant="dark" expand="lg">
-            <Container>
-                <Navbar.Brand href="/">🤓 Community of Education</Navbar.Brand>
-                <Navbar.Toggle aria-controls="basic-navbar-nav" />
-                <Navbar.Collapse id="basic-navbar-nav">
-                <Nav className="ms-auto">
-                    <Nav.Link href="/add">Add Questions</Nav.Link>
-                    <Nav.Link onClick={(e) => signOut(auth)}>Logout</Nav.Link>
-                    <NavbarText style={{color:"white"}} className="ms-3">{userEmail}</NavbarText>
-                    <Nav className="ms-auto">
-                </Nav>
-                    <NavbarText style={{color:"grey"}} className="ms-3">{userScore} points</NavbarText>
-                </Nav>
-                </Navbar.Collapse>
-            </Container>
-        </Navbar>
+                <Container>
+                    <Navbar.Brand href="/">🤓 Community of Education</Navbar.Brand>
+                    <Navbar.Toggle aria-controls="basic-navbar-nav" />
+                    <Navbar.Collapse id="basic-navbar-nav">
+                        <Nav className="ms-auto">
+                            <NavbarText style={{color:"white"}} className="ms-3">{userEmail}</NavbarText>
+                            <NavbarText style={{color:"grey"}} className="ms-3">{userScore} points</NavbarText>
+                            <Dropdown>
+                                <Dropdown.Toggle className="ms-3" variant="secondary" id="dropdown-basic">
+                                    Menu
+                                </Dropdown.Toggle>
+                                <Dropdown.Menu>
+                                    <Dropdown.Item href="/add">Add Questions</Dropdown.Item>
+                                    <Dropdown.Item onClick={(e) => signOut(auth)}>Logout</Dropdown.Item>
+                                </Dropdown.Menu>
+                            </Dropdown>
+                        </Nav>
+                    </Navbar.Collapse>
+                </Container>
+            </Navbar>
 
         <Container className="my-3">
         <h1>What MCQ questions would you like to do?</h1>
@@ -142,20 +149,36 @@ export default function HomePage() {
 
             {selectedLevel && (selectedLevel !== "A-Level" || selectedHigher) && (
                 <Dropdown className="mb-3">
-                    <Dropdown.Toggle variant="info" id="dropdown-subject">
-                        {selectedSubject || "Select Subject"}
-                    </Dropdown.Toggle>
-                    <Dropdown.Menu>
-                        {subjects.map(subject => (
-                            <Dropdown.Item
-                                key={subject}
-                                onClick={() => setSelectedSubject(subject)}
-                            >
-                                {subject}
-                            </Dropdown.Item>
-                        ))}
-                    </Dropdown.Menu>
-                </Dropdown>
+                <Dropdown.Toggle variant="info" id="dropdown-subject">
+                    {selectedSubject || "Select Subject"}
+                </Dropdown.Toggle>
+                <Dropdown.Menu>
+                    {(selectedLevel === "PSLE") && psleSubjects.map(subject => (
+                        <Dropdown.Item
+                            key={subject}
+                            onClick={() => setSelectedSubject(subject)}
+                        >
+                            {subject}
+                        </Dropdown.Item>
+                    ))}
+                    {(selectedLevel === "O-Level") && oLevelSubjects.map(subject => (
+                        <Dropdown.Item
+                            key={subject}
+                            onClick={() => setSelectedSubject(subject)}
+                        >
+                            {subject}
+                        </Dropdown.Item>
+                    ))}
+                    {(selectedLevel === "A-Level") && aLevelSubjects.map(subject => (
+                        <Dropdown.Item
+                            key={subject}
+                            onClick={() => setSelectedSubject(subject)}
+                        >
+                            {subject}
+                        </Dropdown.Item>
+                    ))}
+                </Dropdown.Menu>
+            </Dropdown>
             )}
 
         <Button variant="primary" onClick={handleSearch}>
