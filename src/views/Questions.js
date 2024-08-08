@@ -87,6 +87,7 @@ export default function Question() {
 
         setTimeout(() => {
         navigate(`/question/${subjectId}/${randomQuestionId}`);
+        window.location.reload();
         }, 2000);
     };
 
@@ -144,9 +145,9 @@ export default function Question() {
                         <Image
                             src={questionData.image}
                             style={{
-                                objectFit: "cover",
-                                width: "30rem",
-                                height: "30rem",
+                                objectFit: "fill",
+                                width: "20rem",
+                                height: "20rem",
                                 textAlign: "center"
                         }}
                         />
