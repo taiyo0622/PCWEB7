@@ -86,8 +86,8 @@ export default function Question() {
         const randomQuestionId = allQuestionIds[Math.floor(Math.random() * allQuestionIds.length)];
 
         setTimeout(() => {
-            window.location.reload();
             navigate(`/question/${subjectId}/${randomQuestionId}`);
+            window.location.reload();
         }, 2000);
     };
 
